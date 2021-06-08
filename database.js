@@ -11,7 +11,6 @@ const urlDataSchema = new Schema({
 const shortenerDocSchema = new Schema({
     shortenerNum: Number,
 });
-
 const UrlData = mongoose.model("UrlData", urlDataSchema);
 const ShortenerDoc = mongoose.model("ShortenerDoc", shortenerDocSchema);
 
