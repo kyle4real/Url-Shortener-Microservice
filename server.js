@@ -16,25 +16,21 @@ app.get("/", (req, res) => {
     res.sendFile(`${process.cwd()}/views/index.html`);
 });
 
-const regex =
-    /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/;
+// const regex =
+//     /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/;
 app.post("/api/shorturl", (req, res) => {
     const url = req.body.url;
-    if (!url.match(regex)) return res.json({ error: "invalid url" });
-    let host, begin;
-    if (url.includes("www")) {
-        begin = url.substring(0, url.indexOf(".") + 1);
-        host = url.substring(url.indexOf(".") + 1, url.length);
-    } else {
-        begin = url.substring(0, url.indexOf("/") + 2);
-        host = url.substring(url.indexOf("/") + 2, url.length);
+    try {
+        const { host } = new URL(url);
+        console.log(host);
+        dns.lookup(host, async (err) => {
+            if (err) return res.json({ error: "invalid url" });
+            const shortener = await searchDB(url);
+            res.json({ original_url: url, short_url: shortener });
+        });
+    } catch (err) {
+        res.json({ error: "invalid url" });
     }
-    dns.lookup(host, async (err) => {
-        if (err) return res.json({ error: "invalid url" });
-        const fullUrl = `${begin}${host}`;
-        const shortener = await searchDB(fullUrl);
-        res.json({ original_url: fullUrl, short_url: shortener });
-    });
 });
 
 app.get("/api/shorturl/:shortener", async (req, res) => {
